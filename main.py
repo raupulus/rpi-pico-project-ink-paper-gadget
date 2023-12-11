@@ -34,12 +34,6 @@ def thread0():
     Primer hilo para lecturas y envío de datos a las acciones del segundo hilo.
     """
 
-    # Inicializo el contador de lecturas
-    #counter = 0
-
-    # Momento de la última subida a la api.
-    last_upload_at = time()
-
     # Momento de la última vez que se mostró por pantalla.
     last_show_display_at = time()
 
