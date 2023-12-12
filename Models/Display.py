@@ -4,7 +4,6 @@ from picographics import PicoGraphics, DISPLAY_INKY_PACK
 import jpegdec
 import random
 
-
 class Display:
     WS_ICONS = {
         "cloud_moon_rain": "images/weather-station/day-status-cloud_moon_rain.jpg", # Noche nublada lluviosa
@@ -52,8 +51,9 @@ class Display:
         self.graphics.clear()
         self.graphics.set_pen(0)
 
-    def draw_rectangle(self, start_x, start_y, end_x, end_y):
-        self.graphics.set_pen(0)
+    def draw_rectangle(self, start_x, start_y, end_x, end_y, color=0):
+        "Dibuja un rectángulo"
+        self.graphics.set_pen(color)
         self.graphics.rectangle(start_x,start_y,end_x,end_y)
 
     def create_frame(self):
@@ -67,13 +67,17 @@ class Display:
         self.graphics.line(self.WIDTH - 1,0,self.WIDTH -1,self.HEIGHT - 1)
         self.graphics.line(0,self.HEIGHT - 1,self.WIDTH -1,self.HEIGHT - 1)
 
-        #self.update()
-
     def set_top_bar_hour(self, time="00:00"):
+        """
+        Establece la hora en la barra superior.
+        """
         self.graphics.set_pen(15)
         self.graphics.text(time, self.WIDTH - 67, 3, scale=2)
 
     def set_top_bar_temperature(self, status="sun", temperature=22):
+        """
+        Establece la temperatura en la barra superior.
+        """
         self.jpegdec.open_file(self.WS_ICONS.get(status))
         self.jpegdec.decode(5, 4, jpegdec.JPEG_SCALE_FULL, dither=False)
 
@@ -81,6 +85,9 @@ class Display:
         self.graphics.text(str(temperature) + "C", 26, 3, scale=2)
 
     def create_top_bar(self, day_status="sun", temperature=22, time="00:00"):
+        """
+        Crea la barra superior.
+        """
         print('ENTRA EN CREATE_TOP_BAR')
 
         # Background
@@ -106,9 +113,14 @@ class Display:
         self.set_top_bar_hour(time)
 
     def create_home_card(self, position, icon_name, text):
-        # Cada altura de tarjeta son 19px
+        """
+        Crea una tarjeta en el home.
+        """
 
+        # Base para el ancho de la tarjeta.
         card_width = int((self.WIDTH/2) - 2)
+
+        # Altura de la tarjeta en píxeles.
         card_height = 19
 
         positions = { # [width margin, heigth margin, column]
@@ -175,6 +187,11 @@ class Display:
 
 
     def image_from_sprite(self):
+        """
+        Establece la imagen desde un sprite.
+
+        TOFIX!!!! -> dinamizar y testear el formato de grises (0-15, 16 tonos)
+        """
         icon_scale = 2
         color_transparent = 15
 
