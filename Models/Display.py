@@ -6,8 +6,31 @@ import random
 
 
 class Display:
-    def __init__(self, controller) -> None:
+    WS_ICONS = {
+        "cloud_moon_rain": "images/weather-station/day-status-cloud_moon_rain.jpg", # Noche nublada lluviosa
+        "cloud_moon": "images/weather-station/day-status-cloud_moon.jpg", # Noche Nublada
+        "cloud_rain": "images/weather-station/day-status-cloud_rain.jpg", # Nublado con mucha lluvia
+        "cloud_showers_heavy": "images/weather-station/day-status-cloud_showers_heavy.jpg", #Nublado con lluvia
+        "cloud_sun_rain": "images/weather-station/day-status-cloud_sun_rain.jpg", # Soleado con lluvia
+        "cloud": "images/weather-station/day-status-cloud.jpg", # Nublado
+        "sun_cloud": "images/weather-station/day-status-sun_cloud.jpg", # Soleado con algo de nubes
+        "sun": "images/weather-station/day-status-sun.jpg", # Soleado
+        "thunderstorm": "images/weather-station/day-status-thunderstorm.jpg", # Tormentas
+        "wind": "images/weather-station/day-status-wind.jpg", # Viento
+    }
 
+    ICONS = {
+        "youtube": 'images/youtube.jpg',
+        "twitch": 'images/twitch.jpg',
+        "twitter": 'images/twitter.jpg',
+        "bitcoin": 'images/bitcoin.jpg',
+        "printer": 'images/printer.jpg',
+        "keyboard": 'images/keyboard.jpg',
+    }
+
+    def __init__(self, controller, debug=False) -> None:
+
+        self.DEBUG = debug
         self.controller = controller
 
         self.graphics = PicoGraphics(display = DISPLAY_INKY_PACK)
@@ -16,11 +39,11 @@ class Display:
         self.jpegdec = jpegdec.JPEG(self.graphics)
 
         self.graphics.set_font("bitmap8")
-        self.graphics.set_update_speed(3)
-        self.graphics.set_pen(0)
-        self.graphics.update()
+        self.graphics.set_update_speed(2)
 
         self.clear()
+
+        self.graphics.update()
 
     # a handy function we can call to clear the screen
     # display.set_pen(15) is white and display.set_pen(0) is black
@@ -44,15 +67,26 @@ class Display:
         self.graphics.line(self.WIDTH - 1,0,self.WIDTH -1,self.HEIGHT - 1)
         self.graphics.line(0,self.HEIGHT - 1,self.WIDTH -1,self.HEIGHT - 1)
 
-        self.update()
+        #self.update()
 
-    def create_top_bar(self):
+    def set_top_bar_hour(self, time="00:00"):
+        self.graphics.set_pen(15)
+        self.graphics.text(time, self.WIDTH - 67, 3, scale=2)
+
+    def set_top_bar_temperature(self, status="sun", temperature=22):
+        self.jpegdec.open_file(self.WS_ICONS.get(status))
+        self.jpegdec.decode(5, 4, jpegdec.JPEG_SCALE_FULL, dither=False)
+
+        self.graphics.set_pen(15)
+        self.graphics.text(str(temperature) + "C", 26, 3, scale=2)
+
+    def create_top_bar(self, day_status="sun", temperature=22, time="00:00"):
         print('ENTRA EN CREATE_TOP_BAR')
 
         # Background
         self.graphics.set_pen(0)
         self.graphics.rectangle(2,2,self.WIDTH - 4, 16)
-        self.graphics.update()
+        #self.graphics.update()
 
         # Wifi
         if self.controller.wifiIsConnected():
@@ -60,20 +94,87 @@ class Display:
         else:
             self.jpegdec.open_file("images/wifi-off.jpg")
 
-        self.jpegdec.decode(self.WIDTH - 20, 5, jpegdec.JPEG_SCALE_FULL, dither=False)
+        self.jpegdec.decode(self.WIDTH - 20, 4, jpegdec.JPEG_SCALE_FULL, dither=False)
+        #self.graphics.update()
 
-        self.graphics.set_pen(15)
+        #self.graphics.set_pen(15)
+
+        # Weather Station, estado del día y temperatura
+        self.set_top_bar_temperature(day_status, temperature)
 
         # Hora
-        self.graphics.text("16:41", self.WIDTH - 67, 3, scale=2)
+        self.set_top_bar_hour(time)
+
+    def create_home_card(self, position, icon_name, text):
+        # Cada altura de tarjeta son 19px
+
+        card_width = int((self.WIDTH/2) - 2)
+        card_height = 19
+
+        positions = { # [width margin, heigth margin, column]
+            1: [2, card_height, 1],
+            2: [2, (card_height * 2) + 2, 1],
+            3: [2, (card_height * 3) + 4, 1],
+            4: [2, (card_height * 4) + 6, 1],
+            5: [2, (card_height * 5) + 8, 1],
+            6: [card_width + 2, card_height, 2],
+        }
+
+        text = str(text)
+
+        position = positions.get(int(position))
+
+        if not position:
+            return
+
+
+        # Creo el marco
+        self.graphics.set_pen(0)
+
+        # Superior
+        self.graphics.line(position[0], position[1], card_width * position[2], position[1])
+
+        # Izquierda
+        self.graphics.line(position[0], position[1], position[0], position[1] + card_height)
+
+        # Inferior
+        self.graphics.line(position[0], position[1] + card_height, (card_width * position[2]) + 1, position[1] + card_height)
+
+        # Derecha
+        self.graphics.line(card_width * position[2], position[1], (card_width * position[2]) + 1, position[1] + card_height)
+
+        self.jpegdec.open_file(self.ICONS.get(icon_name))
+        self.jpegdec.decode(position[0] + 2, position[1] + 3, jpegdec.JPEG_SCALE_FULL, dither=True)
+
+        self.graphics.set_pen(0)
+
+        self.graphics.text(text, position[0] + 30, position[1] + 3, scale=2)
 
     def create_home(self):
+        print("Entra en create_home")
+        self.create_home_card(1, "youtube", "16.371")
+        self.create_home_card(2, "twitch", "1.583")
+        self.create_home_card(3, "twitter", "1.399")
+        self.create_home_card(4, "bitcoin", "5.82 khs")
+        self.create_home_card(5, "printer", "FINSHED")
+        self.create_home_card(6, "keyboard", "99.716")
 
-        pass
-        #self.jpegdec.open_file("images/wifi-white.jpg")
-        #self.jpegdec.decode(self.WIDTH - 20, 6, jpegdec.JPEG_SCALE_FULL, dither=True)
+    def status_handler(self):
+        self.clear()
+        self.graphics.set_pen(15)
+        self.graphics.clear()
+        self.graphics.set_pen(0)
+        self.graphics.text("Network: {}".format(self.controller.SSID), 10, 10, scale=2)
+        self.status_text = "Connecting..."
 
-        """
+        ip = None
+
+        self.graphics.text("ESTADOOO CONECTADOOOOOO", 10, 30, scale=2)
+        self.graphics.text("IP: {}".format(ip), 10, 60, scale=2)
+        self.graphics.update()
+
+
+    def image_from_sprite(self):
         icon_scale = 2
         color_transparent = 15
 
@@ -90,28 +191,11 @@ class Display:
         self.graphics.sprite(0, 0, 50, 60, icon_scale, color_transparent)
 
         self.graphics.set_pen(0)
-        """
-
-
-    def status_handler(self):
-        self.clear()
-        self.graphics.set_update_speed(3)
-        self.graphics.set_pen(15)
-        self.graphics.clear()
-        self.graphics.set_pen(0)
-        self.graphics.text("Network: {}".format(self.controller.SSID), 10, 10, scale=2)
-        self.status_text = "Connecting..."
-
-        ip = None
-
-        self.graphics.text("ESTADOOO CONECTADOOOOOO", 10, 30, scale=2)
-        self.graphics.text("IP: {}".format(ip), 10, 60, scale=2)
-        self.graphics.update()
-
-
-
 
     def update(self):
+        """
+        Actualiza la información de la pantalla
+        """
         self.graphics.update()
 
         """
@@ -140,5 +224,3 @@ class Display:
         self.graphics.set_update_speed(1)
         self.graphics.update()
         """
-
-        pass

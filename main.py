@@ -38,10 +38,10 @@ def thread0():
     last_show_display_at = time()
 
     display.create_frame()
-    display.create_top_bar()
+    #display.create_top_bar()
+    display.create_top_bar("sun_cloud", 19, "17:48")
     display.create_home()
     display.update()
-
 
     sleep(30)
 
